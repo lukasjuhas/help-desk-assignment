@@ -38,11 +38,15 @@ export default function FormFlow() {
 
       setSuccessMessage(`Your ticket ID: ${response.data.public_id}`)
       setStep(4)
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error("Error creating ticket:", err)
+
       const errorMessage =
-        err.response?.data?.errors?.map((err: any) => err.message).join(", ") ||
-        "Failed to create ticket."
+        axios.isAxiosError(err) && err.response?.data?.errors
+          ? (err.response.data.errors as { message: string }[])
+              .map((error) => error.message)
+              .join(", ")
+          : "Failed to create ticket."
       setError(errorMessage)
     } finally {
       setLoading(false)
@@ -157,7 +161,7 @@ export default function FormFlow() {
                   className={`textarea textarea-bordered w-full mb-4 ${
                     errors.description ? "textarea-error" : ""
                   }`}
-                  {...register("issue", {
+                  {...register("description", {
                     required: "Issue description is required",
                   })}
                   onChange={(e) =>

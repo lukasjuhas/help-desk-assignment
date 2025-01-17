@@ -21,8 +21,12 @@ async function migrate() {
     await client.query("BEGIN")
     await createTicketsTable(client)
     await client.query("COMMIT")
-  } catch (err: any) {
-    return error("query error", err.message, err.stack)
+  } catch (err: unknown) {
+    if (err instanceof Error) {
+      error("Query error:", err.message, err.stack)
+    } else {
+      error("Unknown error occurred during migration.")
+    }
   } finally {
     log("Database migrations successful.")
     await client.release()
