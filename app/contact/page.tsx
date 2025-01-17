@@ -26,6 +26,7 @@ export default function FormFlow() {
     setValue,
     clearErrors,
     watch,
+    reset,
   } = useForm<FormData>({
     mode: "onBlur",
     defaultValues: { name: "", email: "", description: "" },
@@ -40,7 +41,6 @@ export default function FormFlow() {
   const description = watch("description")
 
   useEffect(() => {
-    // Focus the appropriate input when the step changes
     if (step === 1 && nameRef.current) {
       nameRef.current.focus()
     } else if (step === 2 && emailRef.current) {
@@ -73,6 +73,13 @@ export default function FormFlow() {
     }
   }
 
+  const resetFormAndStartNew = () => {
+    reset()
+    setStep(1)
+    setSuccessMessage(null)
+    setError(null)
+  }
+
   const validateCurrentStep = async (): Promise<boolean> => {
     if (step === 1) {
       return await trigger("name")
@@ -92,13 +99,13 @@ export default function FormFlow() {
   }
 
   const prevStep = () => {
-    clearErrors() // Clear all errors when navigating back
+    clearErrors()
     setStep((prev) => Math.max(prev - 1, 1))
   }
 
   const handleInputChange = (field: keyof FormData, value: string) => {
-    setValue(field, value, { shouldValidate: false }) // Update value without validating
-    clearErrors(field) // Clear errors for the specific field
+    setValue(field, value, { shouldValidate: false })
+    clearErrors(field)
   }
 
   const handleKeyDown = async (e: React.KeyboardEvent) => {
@@ -106,10 +113,8 @@ export default function FormFlow() {
       e.preventDefault()
 
       if (step === 3) {
-        // Submit the form on the last step
         await handleSubmit(onSubmit)()
       } else {
-        // Navigate to the next step
         await nextStep()
       }
     }
@@ -132,7 +137,7 @@ export default function FormFlow() {
                     errors.name ? "input-error" : ""
                   }`}
                   {...register("name", { required: "Name is required" })}
-                  value={name} // Controlled input
+                  value={name}
                   ref={(el) => {
                     nameRef.current = el
                   }}
@@ -170,7 +175,7 @@ export default function FormFlow() {
                       message: "Invalid email address",
                     },
                   })}
-                  value={email} // Controlled input
+                  value={email}
                   ref={(el) => {
                     emailRef.current = el
                   }}
@@ -213,7 +218,7 @@ export default function FormFlow() {
                   {...register("description", {
                     required: "Issue description is required",
                   })}
-                  value={description} // Controlled input
+                  value={description}
                   ref={(el) => {
                     descriptionRef.current = el
                   }}
@@ -262,11 +267,7 @@ export default function FormFlow() {
                   <p className="mt-6 text-sm">or</p>
                   <button
                     className="btn btn-link mt-4"
-                    onClick={() => {
-                      setStep(1)
-                      setSuccessMessage(null)
-                      setError(null)
-                    }}
+                    onClick={resetFormAndStartNew}
                   >
                     Submit Another
                   </button>
