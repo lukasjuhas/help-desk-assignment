@@ -2,8 +2,16 @@
 @tailwind components;
 @tailwind utilities;
 
+:root {
+  --font-space-mono: "Space Mono", monospace;
+}
+
+body {
+  font-family: var(--font-space-mono);
+}
+
 @layer components {
   .btn {
-    @apply rounded-full;
+    @apply rounded-full px-6;
   }
 }

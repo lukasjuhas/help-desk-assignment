@@ -1,9 +1,6 @@
 import type { Metadata } from "next"
 import { Space_Mono } from "next/font/google"
 import "./globals.css"
-import Sidebar from "./components/Sidebar"
-import Navbar from "./components/Navbar"
-import Footer from "./components/Footer"
 
 const spaceMono = Space_Mono({
   variable: "--font-space-mono",
@@ -23,16 +20,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body className={`${spaceMono.variable} antialiased`}>
-        <div className="flex h-screen">
-          <Sidebar />
-          <div className="flex flex-col flex-grow">
-            <Navbar />
-            <main className="p-6 flex-grow">{children}</main>
-            <Footer />
-          </div>
-        </div>
-      </body>
+      <body className={`${spaceMono.variable} antialiased`}>{children}</body>
     </html>
   )
 }

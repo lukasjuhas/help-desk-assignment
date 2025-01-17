@@ -1,3 +1,5 @@
+import Link from "next/link"
+
 export default function HomePage() {
   return (
     <div className="text-center py-10">
@@ -10,7 +12,9 @@ export default function HomePage() {
       <p>...</p>
       <p>...</p>
       <h2 className="text-2xl font-bold mt-6 mb-6">Still having trouble?</h2>
-      <button className="btn btn-primary btn-lg">Contact us</button>
+      <Link href="/contact" className="btn btn-primary btn-lg">
+        Contact us
+      </Link>
     </div>
   )
 }
