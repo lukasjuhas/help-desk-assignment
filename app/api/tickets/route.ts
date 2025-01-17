@@ -28,19 +28,48 @@ function validateFields(
   return errors
 }
 
-// GET: Fetch all tickets
-export async function GET() {
-  try {
-    const result = await pool.query(
-      "SELECT public_id, name, email, description, status, created_at, updated_at FROM tickets ORDER BY created_at DESC"
-    )
-    return NextResponse.json(result.rows)
-  } catch (error) {
-    console.error("Error fetching tickets:", error)
-    return NextResponse.json(
-      { error: "Internal Server Error" },
-      { status: INTERNAL_SERVER_ERROR }
-    )
+// GET: Fetch all tickets or a single ticket based on query parameters
+export async function GET(req: NextRequest) {
+  const { searchParams } = new URL(req.url)
+  const public_id = searchParams.get("public_id")
+
+  if (public_id) {
+    // Fetch single ticket
+    try {
+      const result = await pool.query(
+        "SELECT public_id, name, email, description, status, created_at, updated_at FROM tickets WHERE public_id = $1",
+        [public_id]
+      )
+
+      if (result.rows.length === 0) {
+        return NextResponse.json(
+          { error: "Ticket not found" },
+          { status: NOT_FOUND }
+        )
+      }
+
+      return NextResponse.json(result.rows[0])
+    } catch (error) {
+      console.error("Error fetching ticket:", error)
+      return NextResponse.json(
+        { error: "Internal Server Error" },
+        { status: INTERNAL_SERVER_ERROR }
+      )
+    }
+  } else {
+    // Fetch all tickets
+    try {
+      const result = await pool.query(
+        "SELECT public_id, name, email, description, status, created_at, updated_at FROM tickets ORDER BY created_at DESC"
+      )
+      return NextResponse.json(result.rows)
+    } catch (error) {
+      console.error("Error fetching tickets:", error)
+      return NextResponse.json(
+        { error: "Internal Server Error" },
+        { status: INTERNAL_SERVER_ERROR }
+      )
+    }
   }
 }
 
@@ -62,42 +91,10 @@ export async function POST(req: NextRequest) {
       "INSERT INTO tickets (public_id, name, email, description) VALUES ($1, $2, $3, $4) RETURNING *",
       [publicId, name, email, description]
     )
+
     return NextResponse.json(result.rows[0], { status: CREATED })
   } catch (error) {
     console.error("Error creating ticket:", error)
-    return NextResponse.json(
-      { error: "Internal Server Error" },
-      { status: INTERNAL_SERVER_ERROR }
-    )
-  }
-}
-
-// GET: Fetch a single ticket
-export async function GET_SINGLE(req: NextRequest) {
-  const { searchParams } = new URL(req.url)
-  const public_id = searchParams.get("public_id")
-
-  if (!public_id) {
-    return NextResponse.json(
-      { error: "Public ID is required" },
-      { status: BAD_REQUEST }
-    )
-  }
-
-  try {
-    const result = await pool.query(
-      "SELECT public_id, name, email, description, status, created_at, updated_at FROM tickets WHERE public_id = $1",
-      [public_id]
-    )
-    if (result.rows.length === 0) {
-      return NextResponse.json(
-        { error: "Ticket not found" },
-        { status: NOT_FOUND }
-      )
-    }
-    return NextResponse.json(result.rows[0])
-  } catch (error) {
-    console.error("Error fetching ticket:", error)
     return NextResponse.json(
       { error: "Internal Server Error" },
       { status: INTERNAL_SERVER_ERROR }
@@ -122,12 +119,14 @@ export async function PUT(req: NextRequest) {
       "UPDATE tickets SET status = $1 WHERE public_id = $2 RETURNING *",
       [status, public_id]
     )
+
     if (result.rows.length === 0) {
       return NextResponse.json(
         { error: "Ticket not found" },
         { status: NOT_FOUND }
       )
     }
+
     return NextResponse.json(result.rows[0])
   } catch (error) {
     console.error("Error updating ticket:", error)
