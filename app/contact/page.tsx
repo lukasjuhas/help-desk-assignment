@@ -2,17 +2,21 @@
 
 import { useState } from "react"
 import { useForm, SubmitHandler } from "react-hook-form"
+import axios from "axios"
 import Link from "next/link"
 import SlideTransition from "../components/SlideTransition"
 
 type FormData = {
   name: string
   email: string
-  issue: string
+  description: string
 }
 
 export default function FormFlow() {
   const [step, setStep] = useState(1)
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const [successMessage, setSuccessMessage] = useState<string | null>(null)
 
   const {
     register,
@@ -22,29 +26,45 @@ export default function FormFlow() {
     setValue,
     clearErrors,
     watch,
-  } = useForm<FormData>({ mode: "onBlur" }) // Errors trigger on blur, not input.
+  } = useForm<FormData>({ mode: "onBlur" })
 
-  const onSubmit: SubmitHandler<FormData> = (data) => {
-    console.log("Form Submitted:", data)
-    setStep(4) // Go to the confirmation step
+  const onSubmit: SubmitHandler<FormData> = async (data: FormData) => {
+    setLoading(true)
+    setError(null)
+    setSuccessMessage(null)
+
+    try {
+      const response = await axios.post("/api/tickets", data)
+
+      setSuccessMessage(`Your ticket ID: ${response.data.public_id}`)
+      setStep(4)
+    } catch (err: any) {
+      console.error("Error creating ticket:", err)
+      const errorMessage =
+        err.response?.data?.errors?.map((err: any) => err.message).join(", ") ||
+        "Failed to create ticket."
+      setError(errorMessage)
+    } finally {
+      setLoading(false)
+    }
   }
 
   const nextStep = async () => {
-    const isValid = await trigger() // Validate the current step
+    const isValid = await trigger()
     if (isValid) setStep((prev) => prev + 1)
   }
 
   const prevStep = () => setStep((prev) => Math.max(prev - 1, 1))
 
   const handleInputChange = (field: keyof FormData, value: string) => {
-    setValue(field, value) // Update the form field value
-    clearErrors(field) // Clear errors for the field
+    setValue(field, value)
+    clearErrors(field)
   }
 
   const handleKeyDown = async (e: React.KeyboardEvent) => {
     if (e.key === "Enter") {
-      e.preventDefault() // Prevent form submission
-      await nextStep() // Trigger next step validation
+      e.preventDefault()
+      await nextStep()
     }
   }
 
@@ -76,6 +96,7 @@ export default function FormFlow() {
                   type="button"
                   className="btn btn-primary w-full mt-4"
                   onClick={nextStep}
+                  disabled={loading}
                 >
                   Next
                 </button>
@@ -96,7 +117,7 @@ export default function FormFlow() {
                   {...register("email", {
                     required: "Email is required",
                     pattern: {
-                      value: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
+                      value: /^[^\s@]+@[^\s@]+\.[^\s@]+$/, // Simplified regex
                       message: "Invalid email address",
                     },
                   })}
@@ -106,13 +127,19 @@ export default function FormFlow() {
                   <p className="text-red-500 text-sm">{errors.email.message}</p>
                 )}
                 <div className="flex justify-between mt-4">
-                  <button type="button" className="btn" onClick={prevStep}>
+                  <button
+                    type="button"
+                    className="btn"
+                    onClick={prevStep}
+                    disabled={loading}
+                  >
                     Back
                   </button>
                   <button
                     type="button"
                     className="btn btn-primary"
                     onClick={nextStep}
+                    disabled={loading}
                   >
                     Next
                   </button>
@@ -128,21 +155,34 @@ export default function FormFlow() {
                 <textarea
                   placeholder="Describe your issue"
                   className={`textarea textarea-bordered w-full mb-4 ${
-                    errors.issue ? "textarea-error" : ""
+                    errors.description ? "textarea-error" : ""
                   }`}
                   {...register("issue", {
                     required: "Issue description is required",
                   })}
-                  onChange={(e) => handleInputChange("issue", e.target.value)}
+                  onChange={(e) =>
+                    handleInputChange("description", e.target.value)
+                  }
                 ></textarea>
-                {errors.issue && (
-                  <p className="text-red-500 text-sm">{errors.issue.message}</p>
+                {errors.description && (
+                  <p className="text-red-500 text-sm">
+                    {errors.description.message}
+                  </p>
                 )}
                 <div className="flex justify-between mt-4">
-                  <button type="button" className="btn" onClick={prevStep}>
+                  <button
+                    type="button"
+                    className="btn"
+                    onClick={prevStep}
+                    disabled={loading}
+                  >
                     Back
                   </button>
-                  <button type="submit" className="btn btn-primary">
+                  <button
+                    type="submit"
+                    className="btn btn-primary"
+                    disabled={loading}
+                  >
                     Submit
                   </button>
                 </div>
@@ -151,9 +191,13 @@ export default function FormFlow() {
             {step === 4 && (
               <div>
                 <h2 className="text-3xl font-bold mb-4">Thank you!</h2>
-                <p>
+                <p className="mb-2">
                   Your issue has been received. We will get back to you shortly.
                 </p>
+                {successMessage && (
+                  <p className="text-green-600 text-sm">{successMessage}</p>
+                )}
+                {error && <p className="text-red-500 text-sm">{error}</p>}
                 <div className="mt-8">
                   <Link href="/" className="btn mt-6">
                     Back to home
@@ -161,7 +205,11 @@ export default function FormFlow() {
                   <p className="mt-6 text-sm">or</p>
                   <button
                     className="btn btn-link mt-4"
-                    onClick={() => setStep(1)}
+                    onClick={() => {
+                      setStep(1)
+                      setSuccessMessage(null)
+                      setError(null)
+                    }}
                   >
                     Submit Another
                   </button>
