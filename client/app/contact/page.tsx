@@ -51,7 +51,7 @@ export default function FormFlow() {
   const name = watch("name") || ""
 
   return (
-    <div className="flex justify-center items-center h-screen bg-gray-100">
+    <div className="flex justify-center items-center py-24">
       <div className="w-full max-w-lg text-center">
         <form onSubmit={handleSubmit(onSubmit)} onKeyDown={handleKeyDown}>
           <SlideTransition key={step}>

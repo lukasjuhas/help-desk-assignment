@@ -1,5 +1,6 @@
 import type { Metadata } from "next"
 import { Space_Mono } from "next/font/google"
+import Navbar from "./components/Navbar"
 import "./globals.css"
 
 const spaceMono = Space_Mono({
@@ -20,7 +21,14 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body className={`${spaceMono.variable} antialiased`}>{children}</body>
+      <body
+        className={`${spaceMono.variable} antialiased bg-gray-100 min-h-screen`}
+      >
+        <header>
+          <Navbar />
+        </header>
+        <main>{children}</main>
+      </body>
     </html>
   )
 }

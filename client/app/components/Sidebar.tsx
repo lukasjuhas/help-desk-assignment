@@ -13,7 +13,6 @@ export default function Sidebar() {
 
       <aside className="fixed top-0 left-0 h-full w-64 bg-base-200 transform -translate-x-full peer-checked:translate-x-0 transition-transform duration-300 md:translate-x-0 md:relative">
         <div className="p-4 flex items-center justify-between">
-          <span className="text-2xl font-bold">Help Desk</span>
           <label htmlFor="sidebar-toggle" className="btn btn-circle md:hidden">
             ✕
           </label>

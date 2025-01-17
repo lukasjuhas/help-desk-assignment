@@ -1,5 +1,4 @@
 import Sidebar from "../components/Sidebar"
-import Navbar from "../components/Navbar"
 import Footer from "../components/Footer"
 
 export default function AdminLayout({
@@ -11,7 +10,6 @@ export default function AdminLayout({
     <div className="flex h-screen">
       <Sidebar />
       <div className="flex flex-col flex-grow">
-        <Navbar />
         <main className="p-6 flex-grow">{children}</main>
         <Footer />
       </div>

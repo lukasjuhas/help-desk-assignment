@@ -1,9 +1,36 @@
+import Link from "next/link"
+import Image from "next/image"
+import HifiLogo from "../../public/hifi-logo.svg"
+
 export default function Navbar() {
   return (
-    <header className="p-4 flex justify-between items-center">
-      <div></div>
+    <header className="py-2 px-6 flex justify-between items-center">
       <div>
-        <button className="btn btn-sm">Log Out</button>
+        <Link href="/">
+          <Image
+            priority
+            src={HifiLogo}
+            alt="HIFI Help Desk"
+            className="w-12"
+          />
+        </Link>
+      </div>
+      <div>
+        <aside>
+          <nav>
+            <ul className="menu menu-horizontal space-x-2">
+              <li>
+                <Link href="/">Home</Link>
+              </li>
+              <li>
+                <Link href="/admin">Admin</Link>
+              </li>
+              <li>
+                <Link href="/contact">Contact Us</Link>
+              </li>
+            </ul>
+          </nav>
+        </aside>
       </div>
     </header>
   )
