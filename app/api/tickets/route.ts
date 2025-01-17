@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server"
+import DOMPurify from "isomorphic-dompurify"
 import {
   CREATED,
   BAD_REQUEST,
@@ -85,11 +86,15 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ errors }, { status: BAD_REQUEST })
     }
 
+    const sanitizedName = DOMPurify.sanitize(name)
+    const sanitizedEmail = DOMPurify.sanitize(email)
+    const sanitizedDescription = DOMPurify.sanitize(description)
+
     const publicId = generatePublicId()
 
     const result = await pool.query(
       "INSERT INTO tickets (public_id, name, email, description) VALUES ($1, $2, $3, $4) RETURNING *",
-      [publicId, name, email, description]
+      [publicId, sanitizedName, sanitizedEmail, sanitizedDescription]
     )
 
     return NextResponse.json(result.rows[0], { status: CREATED })
