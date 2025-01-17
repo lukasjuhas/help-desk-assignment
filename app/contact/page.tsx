@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect, useRef } from "react"
 import { useForm, SubmitHandler } from "react-hook-form"
 import axios from "axios"
 import Link from "next/link"
@@ -26,9 +26,31 @@ export default function FormFlow() {
     setValue,
     clearErrors,
     watch,
-  } = useForm<FormData>({ mode: "onBlur" })
+  } = useForm<FormData>({
+    mode: "onBlur",
+    defaultValues: { name: "", email: "", description: "" },
+  })
 
-  const onSubmit: SubmitHandler<FormData> = async (data: FormData) => {
+  const nameRef = useRef<HTMLInputElement | null>(null)
+  const emailRef = useRef<HTMLInputElement | null>(null)
+  const descriptionRef = useRef<HTMLTextAreaElement | null>(null)
+
+  const name = watch("name")
+  const email = watch("email")
+  const description = watch("description")
+
+  useEffect(() => {
+    // Focus the appropriate input when the step changes
+    if (step === 1 && nameRef.current) {
+      nameRef.current.focus()
+    } else if (step === 2 && emailRef.current) {
+      emailRef.current.focus()
+    } else if (step === 3 && descriptionRef.current) {
+      descriptionRef.current.focus()
+    }
+  }, [step])
+
+  const onSubmit: SubmitHandler<FormData> = async (data) => {
     setLoading(true)
     setError(null)
     setSuccessMessage(null)
@@ -39,8 +61,6 @@ export default function FormFlow() {
       setSuccessMessage(`Your ticket ID: ${response.data.public_id}`)
       setStep(4)
     } catch (err: unknown) {
-      console.error("Error creating ticket:", err)
-
       const errorMessage =
         axios.isAxiosError(err) && err.response?.data?.errors
           ? (err.response.data.errors as { message: string }[])
@@ -53,26 +73,47 @@ export default function FormFlow() {
     }
   }
 
-  const nextStep = async () => {
-    const isValid = await trigger()
-    if (isValid) setStep((prev) => prev + 1)
+  const validateCurrentStep = async (): Promise<boolean> => {
+    if (step === 1) {
+      return await trigger("name")
+    } else if (step === 2) {
+      return await trigger("email")
+    } else if (step === 3) {
+      return await trigger("description")
+    }
+    return false
   }
 
-  const prevStep = () => setStep((prev) => Math.max(prev - 1, 1))
+  const nextStep = async () => {
+    const isValid = await validateCurrentStep()
+    if (isValid) {
+      setStep((prev) => prev + 1)
+    }
+  }
+
+  const prevStep = () => {
+    clearErrors() // Clear all errors when navigating back
+    setStep((prev) => Math.max(prev - 1, 1))
+  }
 
   const handleInputChange = (field: keyof FormData, value: string) => {
-    setValue(field, value)
-    clearErrors(field)
+    setValue(field, value, { shouldValidate: false }) // Update value without validating
+    clearErrors(field) // Clear errors for the specific field
   }
 
   const handleKeyDown = async (e: React.KeyboardEvent) => {
     if (e.key === "Enter") {
       e.preventDefault()
-      await nextStep()
+
+      if (step === 3) {
+        // Submit the form on the last step
+        await handleSubmit(onSubmit)()
+      } else {
+        // Navigate to the next step
+        await nextStep()
+      }
     }
   }
-
-  const name = watch("name") || ""
 
   return (
     <div className="flex justify-center items-center py-24">
@@ -91,6 +132,10 @@ export default function FormFlow() {
                     errors.name ? "input-error" : ""
                   }`}
                   {...register("name", { required: "Name is required" })}
+                  value={name} // Controlled input
+                  ref={(el) => {
+                    nameRef.current = el
+                  }}
                   onChange={(e) => handleInputChange("name", e.target.value)}
                 />
                 {errors.name && (
@@ -121,10 +166,14 @@ export default function FormFlow() {
                   {...register("email", {
                     required: "Email is required",
                     pattern: {
-                      value: /^[^\s@]+@[^\s@]+\.[^\s@]+$/, // Simplified regex
+                      value: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
                       message: "Invalid email address",
                     },
                   })}
+                  value={email} // Controlled input
+                  ref={(el) => {
+                    emailRef.current = el
+                  }}
                   onChange={(e) => handleInputChange("email", e.target.value)}
                 />
                 {errors.email && (
@@ -164,6 +213,10 @@ export default function FormFlow() {
                   {...register("description", {
                     required: "Issue description is required",
                   })}
+                  value={description} // Controlled input
+                  ref={(el) => {
+                    descriptionRef.current = el
+                  }}
                   onChange={(e) =>
                     handleInputChange("description", e.target.value)
                   }
