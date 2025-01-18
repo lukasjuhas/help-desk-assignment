@@ -22,12 +22,12 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body
-        className={`${spaceMono.variable} antialiased bg-gray-100 min-h-screen`}
+        className={`${spaceMono.variable} antialiased bg-gray-100 min-h-screen flex flex-col`}
       >
         <header>
           <Navbar />
         </header>
-        <main>{children}</main>
+        <main className="flex-grow">{children}</main>
       </body>
     </html>
   )
