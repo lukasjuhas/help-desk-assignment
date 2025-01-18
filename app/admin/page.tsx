@@ -4,6 +4,7 @@ import { useEffect, useState } from "react"
 import axios from "axios"
 import Link from "next/link"
 import TicketTable from "../components/TicketTable"
+import { ITEM_PREVIEW_COUNT } from "@/lib/config"
 
 type Ticket = {
   public_id: string
@@ -34,7 +35,9 @@ export default function AdminPage() {
 
     const fetchLatestTickets = async () => {
       try {
-        const { data } = await axios.get("/api/tickets?page=1&limit=5")
+        const { data } = await axios.get(
+          `/api/tickets?page=1&limit=${ITEM_PREVIEW_COUNT}`
+        )
         setLatestTickets(
           data.tickets.filter((ticket: Ticket) => ticket.status === "new")
         )
