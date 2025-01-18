@@ -118,7 +118,7 @@ export default function TicketDetailPage() {
       await axios.post("/api/logs", {
         ticket_public_id: ticket.public_id,
         event_type: "response",
-        message: `Response: ${responseMessage}`,
+        message: `Email with response sent: ${responseMessage}`,
       })
 
       const { data: updatedLogs } = await axios.get(
