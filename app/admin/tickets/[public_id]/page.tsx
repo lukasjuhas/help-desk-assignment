@@ -15,6 +15,14 @@ type Ticket = {
   updated_at: string
 }
 
+type Log = {
+  id: number
+  ticket_id: string
+  event_type: string
+  message: string
+  created_at: string
+}
+
 const statusMapping = {
   new: "New",
   progress: "In progress",
@@ -31,15 +39,17 @@ export default function TicketDetailPage() {
   const { public_id } = useParams()
   const router = useRouter()
   const [ticket, setTicket] = useState<Ticket | null>(null)
+  const [logs, setLogs] = useState<Log[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [updating, setUpdating] = useState(false)
   const [selectedStatus, setSelectedStatus] = useState<string | null>(null)
-
+  const [responseMessage, setResponseMessage] = useState<string>("")
   const [showModal, setShowModal] = useState(false)
 
+  // Fetch ticket and logs
   useEffect(() => {
-    const fetchTicket = async () => {
+    const fetchTicketAndLogs = async () => {
       if (!public_id) {
         setError("Ticket ID is missing.")
         setLoading(false)
@@ -47,20 +57,27 @@ export default function TicketDetailPage() {
       }
 
       try {
-        const { data } = await axios.get(`/api/tickets?public_id=${public_id}`)
-        setTicket(data)
-        setSelectedStatus(data.status)
+        const ticketResponse = await axios.get(
+          `/api/tickets?public_id=${public_id}`
+        )
+        const logsResponse = await axios.get(
+          `/api/logs?ticket_public_id=${public_id}`
+        )
+        setTicket(ticketResponse.data)
+        setSelectedStatus(ticketResponse.data.status)
+        setLogs(logsResponse.data.reverse()) // Most recent logs first
       } catch (err) {
-        console.error("Error fetching ticket:", err)
-        setError("Failed to load ticket details.")
+        console.error("Error fetching ticket or logs:", err)
+        setError("Failed to load ticket details or logs.")
       } finally {
         setLoading(false)
       }
     }
 
-    fetchTicket()
+    fetchTicketAndLogs()
   }, [public_id])
 
+  // Handle status change
   const handleStatusChange = (newStatus: string) => {
     setSelectedStatus(newStatus)
     setShowModal(true)
@@ -74,16 +91,44 @@ export default function TicketDetailPage() {
     setShowModal(false)
 
     try {
-      const { data } = await axios.put("/api/tickets", {
+      const { data: updatedTicket } = await axios.put("/api/tickets", {
         public_id: ticket.public_id,
         status: selectedStatus,
       })
-      setTicket(data)
+
+      setTicket(updatedTicket)
+
+      const { data: updatedLogs } = await axios.get(
+        `/api/logs?ticket_public_id=${ticket.public_id}`
+      )
+      setLogs(updatedLogs.reverse())
     } catch (err) {
       console.error("Error updating ticket status:", err)
       setError("Failed to update ticket status.")
     } finally {
       setUpdating(false)
+    }
+  }
+
+  // Handle response submission
+  const handleResponseSubmit = async () => {
+    if (!responseMessage.trim() || !ticket) return
+
+    try {
+      await axios.post("/api/logs", {
+        ticket_public_id: ticket.public_id,
+        event_type: "response",
+        message: `Response: ${responseMessage}`,
+      })
+
+      const { data: updatedLogs } = await axios.get(
+        `/api/logs?ticket_public_id=${ticket.public_id}`
+      )
+      setLogs(updatedLogs.reverse())
+
+      setResponseMessage("") // Clear the input field
+    } catch (err) {
+      console.error("Error logging response:", err)
     }
   }
 
@@ -175,10 +220,51 @@ export default function TicketDetailPage() {
             </p>
           </div>
 
-          {/* Error Message */}
-          {error && <p className="text-red-500 mt-4">{error}</p>}
+          {/* Response Section */}
+          <div className="mb-6">
+            <h2 className="text-lg font-bold">Respond to Ticket</h2>
+            <textarea
+              className="textarea textarea-bordered w-full"
+              placeholder="Write your response..."
+              value={responseMessage}
+              onChange={(e) => setResponseMessage(e.target.value)}
+            ></textarea>
+            <button
+              className="btn btn-primary mt-4"
+              onClick={handleResponseSubmit}
+            >
+              Send Response
+            </button>
+          </div>
         </div>
       )}
+
+      {/* Log Section */}
+      <div className="mb-6 mt-8">
+        <h2 className="text-lg font-bold">Log History</h2>
+        <div
+          className="bg-gray-100 border rounded-md p-4 max-h-40 overflow-y-auto"
+          style={{
+            whiteSpace: "pre-wrap",
+            fontFamily: "monospace",
+            lineHeight: "1.5",
+          }}
+        >
+          {logs.length > 0 ? (
+            logs.map((log) => (
+              <div key={log.id} className="mb-2">
+                <span className="text-sm text-gray-600">
+                  {formatRelativeTime(log.created_at)}:
+                </span>{" "}
+                {log.message}
+              </div>
+            ))
+          ) : (
+            <p className="text-gray-500">No logs available.</p>
+          )}
+        </div>
+      </div>
+
       <button onClick={() => router.back()} className="btn btn-outline mt-6">
         Go Back
       </button>

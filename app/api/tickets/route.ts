@@ -9,6 +9,7 @@ import {
 import pool from "@/lib/db"
 import { generatePublicId } from "@/lib/utils"
 import { ITEMS_PER_PAGE } from "@/lib/config"
+import { logEvent } from "@/lib/logger"
 
 // Validation utility
 function validateFields(
@@ -122,7 +123,16 @@ export async function POST(req: NextRequest) {
       [publicId, sanitizedName, sanitizedEmail, sanitizedDescription]
     )
 
-    return NextResponse.json(result.rows[0], { status: CREATED })
+    const ticket = result.rows[0];
+
+    await logEvent(
+      "ticket_created",
+      `Ticket created by a user.`,
+      ticket.public_id,
+      ticket
+    )
+
+    return NextResponse.json(ticket, { status: CREATED })
   } catch (error) {
     console.error("Error creating ticket:", error)
     return NextResponse.json(
@@ -157,7 +167,15 @@ export async function PUT(req: NextRequest) {
       )
     }
 
-    return NextResponse.json(result.rows[0])
+    const ticket = result.rows[0]
+
+    await logEvent(
+      "status_change",
+      `Status changed to '${status}'`,
+      ticket.public_id
+    )
+
+    return NextResponse.json(ticket)
   } catch (error) {
     console.error("Error updating ticket status:", error)
     return NextResponse.json(
