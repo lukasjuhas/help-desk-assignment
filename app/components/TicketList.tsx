@@ -35,9 +35,8 @@ export default function TicketList({ status, title }: TicketListProps) {
         const { data } = await axios.get(
           `/api/tickets?page=${currentPage}&limit=${TICKETS_PER_PAGE}&status=${status}`
         )
-
-        setTickets(data.tickets) // Only tickets matching the status are loaded
-        setTotalPages(Math.ceil(data.total / TICKETS_PER_PAGE))
+        setTickets(data.tickets)
+        setTotalPages(data.totalPages)
       } catch (err) {
         console.error("Error fetching tickets:", err)
         setError("Failed to load tickets.")
