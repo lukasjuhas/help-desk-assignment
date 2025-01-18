@@ -11,7 +11,7 @@ export default function Navbar() {
             priority
             src={HifiLogo}
             alt="HIFI Help Desk"
-            className="w-12"
+            className="w-12 ml-14 lg:ml-0"
           />
         </Link>
       </div>
