@@ -1,6 +1,7 @@
 "use client"
 
 import { useEffect, useState } from "react"
+import { useRouter, useSearchParams } from "next/navigation"
 import axios from "axios"
 import TicketTable from "@/app/components/TicketTable"
 import { ITEMS_PER_PAGE } from "@/lib/config"
@@ -20,10 +21,14 @@ type TicketListProps = {
 }
 
 export default function TicketList({ status, title }: TicketListProps) {
+  const router = useRouter()
+  const searchParams = useSearchParams()
+
   const [tickets, setTickets] = useState<Ticket[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const [currentPage, setCurrentPage] = useState(1)
+
+  const currentPage = parseInt(searchParams.get("page") || "1", 10)
   const [totalPages, setTotalPages] = useState(1)
 
   useEffect(() => {
@@ -49,7 +54,7 @@ export default function TicketList({ status, title }: TicketListProps) {
   }, [currentPage, status]) // Re-fetch data when `status` or `currentPage` changes
 
   const handlePageChange = (page: number) => {
-    setCurrentPage(page)
+    router.push(`/admin/${status}?page=${page}`) // Update the URL with the current page
   }
 
   return (
