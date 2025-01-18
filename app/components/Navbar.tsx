@@ -4,7 +4,7 @@ import HifiLogo from "../../public/hifi-logo.svg"
 
 export default function Navbar() {
   return (
-    <header className="py-2 px-6 flex justify-between items-center">
+    <header className="py-2 px-6 flex justify-between items-center fixed top-0 left-0 w-full">
       <div>
         <Link href="/">
           <Image

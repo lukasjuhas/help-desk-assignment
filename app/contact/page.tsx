@@ -121,7 +121,7 @@ export default function FormFlow() {
   }
 
   return (
-    <div className="flex justify-center items-center py-24">
+    <div className="flex justify-center items-center py-24 px-10">
       <div className="w-full max-w-lg text-center">
         <form onSubmit={handleSubmit(onSubmit)} onKeyDown={handleKeyDown}>
           <SlideTransition key={step}>

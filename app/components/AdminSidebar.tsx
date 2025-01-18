@@ -84,7 +84,7 @@ export default function AdminSidebar() {
                 key={href}
                 href={href}
                 className={`block py-2 px-4 rounded-lg hover:bg-gray-200 ${
-                  pathname === href ? "bg-primary text-white" : ""
+                  pathname === href ? "bg-primary" : ""
                 }`}
                 onClick={() => setIsOpen(false)} // Close on click
               >

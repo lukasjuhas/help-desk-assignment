@@ -6,11 +6,11 @@ export default function AdminLayout({
   children: React.ReactNode
 }) {
   return (
-    <div className="flex min-h-screen">
+    <div className="flex min-h-screen pt-16">
       {/* Sidebar */}
       <AdminSidebar />
       {/* Main Content */}
-      <div className="flex-grow p-6 lg:ml-64 bg-gray-50">{children}</div>
+      <div className="flex-grow p-6 lg:ml-64">{children}</div>
     </div>
   )
 }
