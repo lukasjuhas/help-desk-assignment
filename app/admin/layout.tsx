@@ -5,7 +5,7 @@ export default function AdminLayout({
   children: React.ReactNode
 }) {
   return (
-    <div className="flex h-[calc(100vh-4rem)]">
+    <div className="flex min-h-[calc(100vh-4rem)]">
       {/* Sidebar */}
       <AdminSidebar />
       {/* Main Content */}

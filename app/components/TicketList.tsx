@@ -59,7 +59,7 @@ export default function TicketList({
   }
 
   return (
-    <div>
+    <div className="pb-10">
       <h1 className="text-3xl font-bold mb-6">{title}</h1>
 
       {loading ? (
