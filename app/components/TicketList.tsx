@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react"
 import axios from "axios"
 import TicketTable from "@/app/components/TicketTable"
-import { TICKETS_PER_PAGE } from "@/lib/config"
+import { ITEMS_PER_PAGE } from "@/lib/config"
 
 type Ticket = {
   public_id: string
@@ -33,7 +33,7 @@ export default function TicketList({ status, title }: TicketListProps) {
 
       try {
         const { data } = await axios.get(
-          `/api/tickets?page=${currentPage}&limit=${TICKETS_PER_PAGE}&status=${status}`
+          `/api/tickets?page=${currentPage}&limit=${ITEMS_PER_PAGE}&status=${status}`
         )
         setTickets(data.tickets)
         setTotalPages(data.totalPages)

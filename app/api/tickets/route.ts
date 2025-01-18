@@ -8,7 +8,7 @@ import {
 } from "http-status-codes"
 import pool from "@/lib/db"
 import { generatePublicId } from "@/lib/utils"
-import { TICKETS_PER_PAGE } from "@/lib/config"
+import { ITEMS_PER_PAGE } from "@/lib/config"
 
 // Validation utility
 function validateFields(
@@ -36,7 +36,7 @@ export async function GET(req: NextRequest) {
   const public_id = searchParams.get("public_id")
   const status = searchParams.get("status") // New status filter
   const page = parseInt(searchParams.get("page") || "1", 10)
-  const limit = parseInt(searchParams.get("limit") || `${TICKETS_PER_PAGE}`, 10)
+  const limit = parseInt(searchParams.get("limit") || `${ITEMS_PER_PAGE}`, 10)
   const offset = (page - 1) * limit
 
   if (public_id) {
