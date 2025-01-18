@@ -35,13 +35,14 @@ function validateFields(
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url)
   const public_id = searchParams.get("public_id")
-  const status = searchParams.get("status") // New status filter
+  const status = searchParams.get("status") // Filter by status
+  const order = searchParams.get("order") || "desc" // Default order: descending
   const page = parseInt(searchParams.get("page") || "1", 10)
   const limit = parseInt(searchParams.get("limit") || `${ITEMS_PER_PAGE}`, 10)
   const offset = (page - 1) * limit
 
   if (public_id) {
-    // Fetch single ticket
+    // Fetch single ticket by public_id
     try {
       const result = await pool.query(
         "SELECT public_id, name, email, description, status, created_at, updated_at FROM tickets WHERE public_id = $1",
@@ -64,13 +65,13 @@ export async function GET(req: NextRequest) {
       )
     }
   } else {
-    // Fetch paginated tickets with optional status filter
+    // Fetch paginated tickets with optional filters and sorting
     try {
       const query = `
         SELECT public_id, name, email, description, status, created_at, updated_at
         FROM tickets
         ${status ? "WHERE status = $3" : ""}
-        ORDER BY created_at DESC
+        ORDER BY created_at ${order.toUpperCase()}
         LIMIT $1 OFFSET $2
       `
       const params = status ? [limit, offset, status] : [limit, offset]
@@ -123,7 +124,7 @@ export async function POST(req: NextRequest) {
       [publicId, sanitizedName, sanitizedEmail, sanitizedDescription]
     )
 
-    const ticket = result.rows[0];
+    const ticket = result.rows[0]
 
     await logEvent(
       "ticket_created",

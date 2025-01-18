@@ -18,6 +18,7 @@ type Ticket = {
 export default function AdminPage() {
   const [counts, setCounts] = useState({ new: 0, progress: 0, resolved: 0 })
   const [latestTickets, setLatestTickets] = useState<Ticket[]>([])
+  const [attentionTickets, setAttentionTickets] = useState<Ticket[]>([])
   const [loadingCounts, setLoadingCounts] = useState(true)
   const [loadingTickets, setLoadingTickets] = useState(true)
 
@@ -33,23 +34,40 @@ export default function AdminPage() {
       }
     }
 
-    const fetchLatestTickets = async () => {
+    const fetchTickets = async () => {
       try {
-        const { data } = await axios.get(
-          `/api/tickets?page=1&limit=${ITEM_PREVIEW_COUNT}`
+        // Fetch latest tickets for "new" status
+        const latestResponse = await axios.get(
+          `/api/tickets?page=1&limit=${ITEM_PREVIEW_COUNT}&status=new&order=desc`
         )
-        setLatestTickets(
-          data.tickets.filter((ticket: Ticket) => ticket.status === "new")
+        setLatestTickets(latestResponse.data.tickets)
+
+        // Fetch tickets needing attention
+        const attentionNewResponse = await axios.get(
+          `/api/tickets?limit=${ITEM_PREVIEW_COUNT}&status=new&order=asc`
         )
+        const attentionProgressResponse = await axios.get(
+          `/api/tickets?limit=${ITEM_PREVIEW_COUNT}&status=progress&order=asc`
+        )
+
+        const combinedAttentionTickets = [
+          ...attentionNewResponse.data.tickets,
+          ...attentionProgressResponse.data.tickets,
+        ].sort(
+          (a, b) =>
+            new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
+        )
+
+        setAttentionTickets(combinedAttentionTickets)
       } catch (error) {
-        console.error("Error fetching latest tickets:", error)
+        console.error("Error fetching tickets:", error)
       } finally {
         setLoadingTickets(false)
       }
     }
 
     fetchCounts()
-    fetchLatestTickets()
+    fetchTickets()
   }, [])
 
   return (
@@ -83,6 +101,18 @@ export default function AdminPage() {
               <h2 className="text-xl font-bold">Resolved</h2>
               <p className="text-2xl mt-2">{counts.resolved}</p>
             </Link>
+          </div>
+
+          {/* Tickets Needing Attention */}
+          <div className="bg-white p-6 rounded-lg shadow-md mb-6">
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-2xl font-bold">High-Priority Tickets</h2>
+            </div>
+            {attentionTickets.length > 0 ? (
+              <TicketTable tickets={attentionTickets} />
+            ) : (
+              <p>No tickets needing immediate attention.</p>
+            )}
           </div>
 
           {/* Latest New Tickets */}
