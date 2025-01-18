@@ -6,8 +6,9 @@ import {
   NOT_FOUND,
   INTERNAL_SERVER_ERROR,
 } from "http-status-codes"
-import pool from "../../../lib/db"
-import { generatePublicId } from "../../../lib/utils"
+import pool from "@/lib/db"
+import { generatePublicId } from "@/lib/utils"
+import { TICKETS_PER_PAGE } from "@/lib/config"
 
 // Validation utility
 function validateFields(
@@ -33,6 +34,10 @@ function validateFields(
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url)
   const public_id = searchParams.get("public_id")
+  const status = searchParams.get("status") // New status filter
+  const page = parseInt(searchParams.get("page") || "1", 10)
+  const limit = parseInt(searchParams.get("limit") || `${TICKETS_PER_PAGE}`, 10)
+  const offset = (page - 1) * limit
 
   if (public_id) {
     // Fetch single ticket
@@ -58,12 +63,32 @@ export async function GET(req: NextRequest) {
       )
     }
   } else {
-    // Fetch all tickets
+    // Fetch paginated tickets with optional status filter
     try {
-      const result = await pool.query(
-        "SELECT public_id, name, email, description, status, created_at, updated_at FROM tickets ORDER BY created_at DESC"
-      )
-      return NextResponse.json(result.rows)
+      const query = `
+        SELECT public_id, name, email, description, status, created_at, updated_at
+        FROM tickets
+        ${status ? "WHERE status = $3" : ""}
+        ORDER BY created_at DESC
+        LIMIT $1 OFFSET $2
+      `
+      const params = status ? [limit, offset, status] : [limit, offset]
+
+      const result = await pool.query(query, params)
+
+      const countQuery = status
+        ? "SELECT COUNT(*) FROM tickets WHERE status = $1"
+        : "SELECT COUNT(*) FROM tickets"
+      const countParams = status ? [status] : []
+      const countResult = await pool.query(countQuery, countParams)
+      const totalCount = parseInt(countResult.rows[0].count, 10)
+
+      return NextResponse.json({
+        tickets: result.rows,
+        total: totalCount,
+        page,
+        totalPages: Math.ceil(totalCount / limit),
+      })
     } catch (error) {
       console.error("Error fetching tickets:", error)
       return NextResponse.json(

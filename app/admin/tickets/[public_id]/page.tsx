@@ -180,7 +180,7 @@ export default function TicketDetailPage() {
         </div>
       )}
       <button onClick={() => router.back()} className="btn btn-outline mt-6">
-        Back to Dashboard
+        Go Back
       </button>
 
       {/* Confirmation Modal */}

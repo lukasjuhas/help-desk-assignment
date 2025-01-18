@@ -17,48 +17,43 @@ type Ticket = {
 export default function AdminPage() {
   const [counts, setCounts] = useState({ new: 0, progress: 0, resolved: 0 })
   const [latestTickets, setLatestTickets] = useState<Ticket[]>([])
-  const [loading, setLoading] = useState(true)
+  const [loadingCounts, setLoadingCounts] = useState(true)
+  const [loadingTickets, setLoadingTickets] = useState(true)
 
   useEffect(() => {
-    const fetchTickets = async () => {
+    const fetchCounts = async () => {
       try {
-        const { data } = await axios.get("/api/tickets")
-
-        // Group tickets by status
-        const grouped = data.reduce(
-          (acc: Record<string, number>, ticket: Ticket) => {
-            acc[ticket.status] = (acc[ticket.status] || 0) + 1
-            return acc
-          },
-          {}
-        )
-
-        setCounts({
-          new: grouped["new"] || 0,
-          progress: grouped["progress"] || 0,
-          resolved: grouped["resolved"] || 0,
-        })
-
-        // Get the latest 5 new tickets
-        const latest = data
-          .filter((ticket: Ticket) => ticket.status === "new")
-          .slice(0, 5)
-        setLatestTickets(latest)
+        const { data } = await axios.get("/api/tickets/counts")
+        setCounts(data)
       } catch (error) {
-        console.error("Error fetching tickets:", error)
+        console.error("Error fetching counts:", error)
       } finally {
-        setLoading(false)
+        setLoadingCounts(false)
       }
     }
 
-    fetchTickets()
+    const fetchLatestTickets = async () => {
+      try {
+        const { data } = await axios.get("/api/tickets?page=1&limit=5")
+        setLatestTickets(
+          data.tickets.filter((ticket: Ticket) => ticket.status === "new")
+        )
+      } catch (error) {
+        console.error("Error fetching latest tickets:", error)
+      } finally {
+        setLoadingTickets(false)
+      }
+    }
+
+    fetchCounts()
+    fetchLatestTickets()
   }, [])
 
   return (
     <div>
       <h1 className="text-3xl font-bold mb-6">Dashboard</h1>
 
-      {loading ? (
+      {loadingCounts || loadingTickets ? (
         <p>Loading...</p>
       ) : (
         <>
