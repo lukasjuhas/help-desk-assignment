@@ -2,9 +2,21 @@ import { NextRequest, NextResponse } from "next/server"
 import pool from "../../../lib/db"
 import { BAD_REQUEST, INTERNAL_SERVER_ERROR } from "http-status-codes"
 
+type LogContext = Record<string, unknown> | null
+
 export async function POST(req: NextRequest) {
   try {
-    const { event_type, message, ticket_public_id, context } = await req.json()
+    const {
+      event_type,
+      message,
+      ticket_public_id,
+      context,
+    }: {
+      event_type: string
+      message: string
+      ticket_public_id?: string
+      context?: LogContext
+    } = await req.json()
 
     if (!event_type || !message) {
       return NextResponse.json(
@@ -18,7 +30,7 @@ export async function POST(req: NextRequest) {
       INSERT INTO logs (ticket_public_id, event_type, message, context)
       VALUES ($1, $2, $3, $4)
     `,
-      [ticket_public_id || null, event_type, message, context || {}]
+      [ticket_public_id || null, event_type, message, context || null]
     )
 
     return NextResponse.json({ success: true })
@@ -38,7 +50,7 @@ export async function GET(req: NextRequest) {
 
   try {
     const queryParts: string[] = []
-    const queryValues: any[] = []
+    const queryValues: (string | null)[] = []
 
     if (ticketPublicId) {
       queryParts.push(`ticket_public_id = $${queryParts.length + 1}`)

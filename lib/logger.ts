@@ -1,5 +1,7 @@
 import pool from "./db"
 
+type LogContext = Record<string, unknown> | null
+
 /**
  * Logs an event in the database.
  * @param eventType - The type of event (e.g., "status_change", "response").
@@ -8,20 +10,19 @@ import pool from "./db"
  * @param context - (Optional) Additional metadata about the event.
  */
 export async function logEvent(
-  eventType: string,
+  event_type: string,
   message: string,
-  ticketPublicId?: string,
-  context: Record<string, any> = {}
-) {
+  ticket_public_id: string | null = null,
+  context: LogContext = null
+): Promise<void> {
   try {
     await pool.query(
       `
       INSERT INTO logs (ticket_public_id, event_type, message, context)
       VALUES ($1, $2, $3, $4)
     `,
-      [ticketPublicId || null, eventType, message, context]
+      [ticket_public_id, event_type, message, context]
     )
-    console.log(`Logged event: ${eventType} - ${message}`)
   } catch (error) {
     console.error("Error logging event:", error)
   }
