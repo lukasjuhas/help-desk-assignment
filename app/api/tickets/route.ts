@@ -121,7 +121,7 @@ export async function PUT(req: NextRequest) {
     }
 
     const result = await pool.query(
-      "UPDATE tickets SET status = $1 WHERE public_id = $2 RETURNING *",
+      "UPDATE tickets SET status = $1, updated_at = NOW() WHERE public_id = $2 RETURNING *",
       [status, public_id]
     )
 
@@ -134,7 +134,7 @@ export async function PUT(req: NextRequest) {
 
     return NextResponse.json(result.rows[0])
   } catch (error) {
-    console.error("Error updating ticket:", error)
+    console.error("Error updating ticket status:", error)
     return NextResponse.json(
       { error: "Internal Server Error" },
       { status: INTERNAL_SERVER_ERROR }
